@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BJMPRO-IX eRoutin9</title>
-    <link rel="icon" type="image/png" href="erouting_logo_v4_circle.ico">
+    <link rel="icon" type="image/x-icon" href="erouting_logo_v4_circle.ico">
     <!-- Matching Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,16 +14,18 @@
         :root {
             --bg-color: #f8fafc;
             --text-color: #64748b;
-            --spinner-track: #e2e8f0;
-            --spinner-top: #1e40af;
+            --primary-accent: #081B98; /* eRoutin9 Primary Blue */
+            --secondary-accent: #818cf8; /* Soft Indigo */
+            --core-glow: rgba(8, 27, 152, 0.4);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #0f172a;
                 --text-color: #94a3b8;
-                --spinner-track: #334155;
-                --spinner-top: #3b82f6;
+                --primary-accent: #3b82f6; /* Brighter Blue for Dark Mode */
+                --secondary-accent: #1e3a8a; /* Deep Indigo */
+                --core-glow: rgba(59, 130, 246, 0.5);
             }
         }
 
@@ -58,71 +60,151 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            gap: 28px;
             z-index: 9999;
             transition: opacity 0.5s ease-out, visibility 0.5s;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--spinner-track);
-            border-top: 4px solid var(--spinner-top);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 16px;
+        /* --- MODERN ORBIT LOADER --- */
+        .modern-loader {
+            position: relative;
+            width: 72px;
+            height: 72px;
         }
 
-        .loading-text {
+        .orbit-outer {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: var(--primary-accent);
+            border-bottom-color: var(--primary-accent);
+            animation: spin 2s linear infinite;
+        }
+
+        .orbit-inner {
+            position: absolute;
+            inset: 12px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-left-color: var(--secondary-accent);
+            border-right-color: var(--secondary-accent);
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite reverse;
+        }
+
+        .core {
+            position: absolute;
+            inset: 28px;
+            background-color: var(--primary-accent);
+            border-radius: 50%;
+            animation: pulse-core 1.5s ease-in-out infinite;
+        }
+
+        /* --- TEXT ANIMATION --- */
+        .text-container {
+            display: flex;
+            align-items: center;
             color: var(--text-color);
             font-family: 'Space Grotesk', sans-serif;
             font-size: 14px;
             font-weight: 600;
-            letter-spacing: 0.05em;
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
         }
 
-        /* Animations */
+        /* Animated typing dots (...) */
+        .text-container::after {
+            content: '';
+            animation: typing 1.5s steps(4, end) infinite;
+            display: inline-block;
+            width: 20px; /* Keeps layout from shifting */
+            text-align: left;
+        }
+
+        /* Keyframes */
         @keyframes spin { 
             0% { transform: rotate(0deg); } 
             100% { transform: rotate(360deg); } 
         }
-        @keyframes pulse { 
-            0%, 100% { opacity: 1; } 
-            50% { opacity: 0.5; } 
+        
+        @keyframes pulse-core { 
+            0%, 100% { 
+                transform: scale(0.8); 
+                opacity: 0.6; 
+                box-shadow: 0 0 0 rgba(0,0,0,0); 
+            } 
+            50% { 
+                transform: scale(1.4); 
+                opacity: 1; 
+                box-shadow: 0 0 16px var(--core-glow); 
+            } 
+        }
+
+        @keyframes typing {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+            100% { content: ''; }
         }
     </style>
 </head>
 <body>
 
     <div id="loader">
-        <div class="spinner"></div>
-        <div class="loading-text">Initializing Workspace...</div>
+        <!-- Modern Animation -->
+        <div class="modern-loader">
+            <div class="orbit-outer"></div>
+            <div class="orbit-inner"></div>
+            <div class="core"></div>
+        </div>
+        <!-- Text Container -->
+        <div class="text-container" id="loadingText">Initializing Application</div>
     </div>
 
-    <iframe 
-        id="appFrame"
-        src="https://script.google.com/macros/s/AKfycbyGDDotGoW_wEWr5LWiCz-9tWWVm5U_kBFt0mwb86oOLNmh1xZOYr9HFFtZ034aqQ/exec"
-
-        allow="geolocation; microphone; camera; clipboard-read; clipboard-write"
-        sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation allow-downloads"
-        onload="hideLoader()">
-    </iframe>
-
     <script>
-        function hideLoader() {
-            const loader = document.getElementById('loader');
-            const iframe = document.getElementById('appFrame');
+        const gasLink = "https://script.google.com/macros/s/AKfycbyGDDotGoW_wEWr5LWiCz-9tWWVm5U_kBFt0mwb86oOLNmh1xZOYr9HFFtZ034aqQ/exec";
+        
+        // Detect if the user is on an iOS device (iPhone/iPad)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        if (isIOS) {
+            // iOS Device
+            // Update the loader text to let the user know what's happening
+            // (The animated dots will automatically append themselves to this new text!)
+            document.getElementById('loadingText').innerText = "Authenticating secure session";
             
-            // Allow the GAS Vue app inside the iframe to finish mounting its DOM
-            setTimeout(() => {
-                loader.style.opacity = '0';
-                iframe.style.opacity = '1'; // Fade in the iframe smoothly
+            // Redirect immediately to bypass Apple's strict cross-site iframe cookie blocking
+            window.location.replace(gasLink);
+        } else {
+            // Android or PC
+            // Create the iframe dynamically
+            const iframe = document.createElement('iframe');
+            iframe.id = 'appFrame';
+            iframe.src = gasLink;
+            iframe.allow = "geolocation; microphone; camera; clipboard-read; clipboard-write";
+            
+            // Allow Google Auth popups to escape the iframe sandbox
+            iframe.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation allow-downloads allow-popups-to-escape-sandbox');
+            
+            // When the iframe finishes loading, trigger your fade-in animation
+            iframe.onload = function() {
+                const loader = document.getElementById('loader');
                 
+                // Allow the GAS Vue app inside the iframe to finish mounting its DOM
                 setTimeout(() => {
-                    loader.style.visibility = 'hidden';
-                    loader.style.display = 'none';
-                }, 500);
-            }, 800);
+                    loader.style.opacity = '0';
+                    iframe.style.opacity = '1'; // Fade in the iframe smoothly
+                    
+                    setTimeout(() => {
+                        loader.style.visibility = 'hidden';
+                        loader.style.display = 'none';
+                    }, 500);
+                }, 800);
+            };
+
+            // Append the iframe to the document body
+            document.body.appendChild(iframe);
         }
     </script>
 
