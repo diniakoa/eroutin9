@@ -165,36 +165,47 @@
     <script>
         const gasLink = "https://script.google.com/macros/s/AKfycbyGDDotGoW_wEWr5LWiCz-9tWWVm5U_kBFt0mwb86oOLNmh1xZOYr9HFFtZ034aqQ/exec";
         
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.action === 'redirect') {
+                
+                if (event.source) {
+                    event.source.postMessage('vercel_ack', '*');
+                }
+
+                const loader = document.getElementById('loader');
+                const iframe = document.getElementById('appFrame');
+                
+                if (loader && iframe) {
+                    loader.style.display = 'flex';
+                    loader.style.visibility = 'visible';
+                    loader.style.opacity = '1';
+                    iframe.style.opacity = '0';
+                    iframe.src = event.data.url;
+                }
+            }
+        });
+        
         // Detect if the user is on an iOS device (iPhone/iPad)
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
         if (isIOS) {
-            // iOS Device
-            // Update the loader text to let the user know what's happening
-            // (The animated dots will automatically append themselves to this new text!)
             document.getElementById('loadingText').innerText = "Authenticating secure session";
-            
             // Redirect immediately to bypass Apple's strict cross-site iframe cookie blocking
             window.location.replace(gasLink);
         } else {
-            // Android or PC
-            // Create the iframe dynamically
             const iframe = document.createElement('iframe');
             iframe.id = 'appFrame';
             iframe.src = gasLink;
             iframe.allow = "geolocation; microphone; camera; clipboard-read; clipboard-write";
             
-            // Allow Google Auth popups to escape the iframe sandbox
-            iframe.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation allow-downloads allow-popups-to-escape-sandbox');
+            iframe.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation allow-top-navigation-by-user-activation allow-downloads allow-popups-to-escape-sandbox');
             
-            // When the iframe finishes loading, trigger your fade-in animation
             iframe.onload = function() {
                 const loader = document.getElementById('loader');
                 
-                // Allow the GAS Vue app inside the iframe to finish mounting its DOM
                 setTimeout(() => {
                     loader.style.opacity = '0';
-                    iframe.style.opacity = '1'; // Fade in the iframe smoothly
+                    iframe.style.opacity = '1'; 
                     
                     setTimeout(() => {
                         loader.style.visibility = 'hidden';
@@ -203,7 +214,6 @@
                 }, 800);
             };
 
-            // Append the iframe to the document body
             document.body.appendChild(iframe);
         }
     </script>
